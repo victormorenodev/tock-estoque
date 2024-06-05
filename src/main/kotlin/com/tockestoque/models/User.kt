@@ -5,6 +5,7 @@ data class User(
     val fullName: String,
     val avatar: String,
     val email: String,
+    val password: String,
     var authToken: String? = null,
     val createdAt: String
 )

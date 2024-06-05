@@ -24,6 +24,10 @@ class UserServiceImpl : UserService {
         return rowToUser(statement?.resultedValues?.get(0))
     }
 
+    override suspend fun loginUser(params: LoginUserParams): User? {
+        return findUserByEmail(params.email)
+    }
+
     override suspend fun findUserByEmail(email: String): User? {
         val user = dbQuery {
             UserTable.select { UserTable.email.eq(email) }
@@ -36,6 +40,7 @@ class UserServiceImpl : UserService {
         return if(row == null) null
         else User(
             id = row[UserTable.id],
+            password = row[UserTable.password],
             fullName = row[UserTable.fullName],
             avatar = row[UserTable.avatar],
             email = row[UserTable.email],
