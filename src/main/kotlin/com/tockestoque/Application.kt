@@ -2,6 +2,7 @@ package com.tockestoque
 
 import com.tockestoque.plugins.configureSecurity
 import com.tockestoque.plugins.configureSerialization
+import com.tockestoque.repository.RefreshTokenRepository
 import com.tockestoque.repository.UserRepository
 import com.tockestoque.routing.configureRouting
 import com.tockestoque.service.JwtService
@@ -14,10 +15,11 @@ fun main(args: Array<String>) {
 
 fun Application.module() {
     val userRepository = UserRepository()
-    val userService = UserService(userRepository)
-    val jwtService = JwtService(this, userService)
+    val jwtService = JwtService(this, userRepository)
+    val refreshTokenRepository = RefreshTokenRepository()
+    val userService = UserService(userRepository, jwtService, refreshTokenRepository)
 
     configureSerialization()
     configureSecurity(jwtService)
-    configureRouting(userService, jwtService)
+    configureRouting(userService)
 }
