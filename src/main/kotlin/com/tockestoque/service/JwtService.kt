@@ -6,6 +6,7 @@ import com.auth0.jwt.algorithms.Algorithm
 import com.tockestoque.repository.UserRepository
 import com.tockestoque.routing.request.LoginRequest
 import io.ktor.server.application.*
+import io.ktor.server.auth.*
 import io.ktor.server.auth.jwt.*
 import java.util.*
 
@@ -27,24 +28,24 @@ class JwtService(
             .withIssuer(issuer)
             .build()
 
-    fun createAccessToken(username: String): String =
-        createJwtToken(username, 1_800_00)
+    fun createAccessToken(email: String): String =
+        createJwtToken(email, 1_800_00)
 
-    fun createRefreshToken(username: String): String =
-        createJwtToken(username, 86_400_000)
+    fun createRefreshToken(email: String): String =
+        createJwtToken(email, 86_400_000)
 
-    private fun createJwtToken(username: String, expireIn: Int): String =
+    private fun createJwtToken(email: String, expireIn: Int): String =
         JWT
             .create()
             .withAudience(audience)
             .withIssuer(issuer)
-            .withClaim("username", username)
+            .withClaim("email", email)
             .withExpiresAt(Date(System.currentTimeMillis() + expireIn))
             .sign(Algorithm.HMAC256(secret))
 
     fun customValidator(credential: JWTCredential): JWTPrincipal? {
         val username = extractUsername(credential)
-        val foundUser = username?.let(userRepository::findByUsername)
+        val foundUser = username?.let(userRepository::findByEmail)
 
         return foundUser?.let {
             if (audienceMatches(credential)) {
@@ -60,8 +61,14 @@ class JwtService(
         credential.payload.audience.contains(audience)
 
     private fun extractUsername(credential: JWTCredential): String? =
-        credential.payload.getClaim("username").asString()
+        credential.payload.getClaim("email").asString()
 
     private fun getConfigProperty(path: String) =
         application.environment.config.property(path).getString()
+
+    fun extractPrincipalEmail(call: ApplicationCall): String? =
+        call.principal<JWTPrincipal>()
+            ?.payload
+            ?.getClaim("email")
+            ?.asString()
 }

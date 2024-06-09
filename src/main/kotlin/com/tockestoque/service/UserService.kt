@@ -14,49 +14,42 @@ class UserService(
     private val refreshTokenRepository: RefreshTokenRepository
 ) {
 
-    fun findAll(): List<User> =
+    suspend fun findAll(): List<User> =
         userRepository.findAll()
 
-    fun findById(id: String): User? =
-        userRepository.findById(
-            id = UUID.fromString(id)
-        )
+    fun findById(id: Int): User? =
+        userRepository.findById(id)
 
-    fun findByUsername(username: String): User? =
-        userRepository.findByUsername(username)
+    fun findByEmail(email: String): User? =
+        userRepository.findByEmail(email)
 
     fun save(user: User): User? {
-        val foundUser = userRepository.findByUsername(user.username)
-
-        return if (foundUser == null) {
-            userRepository.save(user)
-            user
-        } else null
+        TODO("To do")
     }
 
     fun authenticate(loginRequest: LoginRequest): AuthResponse? {
-        val username = loginRequest.username
-        val foundUser = userRepository.findByUsername(username)
+        val email = loginRequest.email
+        val foundUser = userRepository.findByEmail(email)
 
         return if (foundUser != null && foundUser.password == loginRequest.password) {
-            val accessToken = jwtService.createAccessToken(username)
-            val refreshToken = jwtService.createRefreshToken(username)
+            val accessToken = jwtService.createAccessToken(email)
+            val refreshToken = jwtService.createRefreshToken(email)
 
-            refreshTokenRepository.save(refreshToken, username)
+            refreshTokenRepository.save(refreshToken, email)
             AuthResponse(accessToken, refreshToken)
         } else null
     }
 
     fun refreshToken(token: String): String? {
         val decodedRefreshToken = verifyRefreshToken(token)
-        val persistedUsername = refreshTokenRepository.findUsernameByToken(token)
+        val persistedEmail = refreshTokenRepository.findEmailByToken(token)
 
-        return if (decodedRefreshToken != null && persistedUsername != null) {
-            val foundUser = userRepository.findByUsername(persistedUsername)
-            val usernameFromRefreshToken = decodedRefreshToken.getClaim("username").asString()
+        return if (decodedRefreshToken != null && persistedEmail != null) {
+            val foundUser = userRepository.findByEmail(persistedEmail)
+            val usernameFromRefreshToken = decodedRefreshToken.getClaim("email").asString()
 
-            if (foundUser != null && usernameFromRefreshToken == foundUser.username)
-                jwtService.createAccessToken(persistedUsername)
+            if (foundUser != null && usernameFromRefreshToken == foundUser.email)
+                jwtService.createAccessToken(persistedEmail)
             else
                 null
         } else null

@@ -1,5 +1,6 @@
 package com.tockestoque
 
+import com.tockestoque.db.DatabaseFactory
 import com.tockestoque.plugins.configureSecurity
 import com.tockestoque.plugins.configureSerialization
 import com.tockestoque.repository.RefreshTokenRepository
@@ -14,6 +15,7 @@ fun main(args: Array<String>) {
 }
 
 fun Application.module() {
+    DatabaseFactory.init()
     val userRepository = UserRepository()
     val jwtService = JwtService(this, userRepository)
     val refreshTokenRepository = RefreshTokenRepository()
@@ -21,5 +23,5 @@ fun Application.module() {
 
     configureSerialization()
     configureSecurity(jwtService)
-    configureRouting(userService)
+    configureRouting(userService, jwtService)
 }

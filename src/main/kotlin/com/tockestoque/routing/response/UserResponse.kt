@@ -6,7 +6,8 @@ import java.util.UUID
 
 @Serializable
 data class UserResponse(
-    @Serializable(with = UUIDSerializer::class)
-    val id: UUID,
-    val username: String
+    val id: Int,
+    val email: String,
+    val fullName: String,
+    val createdAt: String
 )

@@ -3,6 +3,7 @@ package com.tockestoque.routing
 import com.tockestoque.model.User
 import com.tockestoque.routing.request.UserRequest
 import com.tockestoque.routing.response.UserResponse
+import com.tockestoque.service.JwtService
 import com.tockestoque.service.UserService
 import io.ktor.http.*
 import io.ktor.server.application.*
@@ -13,44 +14,27 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import java.util.*
 
-fun Route.userRoute(userService: UserService) {
+fun Route.userRoute(userService: UserService, jwtService: JwtService) {
 
-    post {
-        val userRequest = call.receive<UserRequest>()
-
-        val createdUser = userService.save(
-            user = userRequest.toModel()
-        ) ?: return@post call.respond(HttpStatusCode.BadRequest)
-
-        call.response.header(
-            name = "id",
-            value = createdUser.id.toString()
-        )
-
-        call.respond(
-            message = HttpStatusCode.Created
-        )
+    post("/register") {
+       TODO("Todo")
     }
 
     authenticate {
-        get {
-            val users = userService.findAll()
-
-            call.respond(
-                message = users.map(User::toResponse)
-            )
+        get("/login") {
+            TODO("Todo")
         }
     }
 
     authenticate("another-auth") {
         get("/{id}") {
-            val id: String = call.parameters["id"]
-                ?: return@get call.respond(HttpStatusCode.BadRequest)
+            val id: Int = (call.parameters["id"]
+                ?: return@get call.respond(HttpStatusCode.BadRequest)) as Int
 
             val foundUser = userService.findById(id)
                 ?: return@get call.respond(HttpStatusCode.NotFound)
 
-            if (foundUser.username != extractPrincipalUsername(call))
+            if (foundUser.email != jwtService.extractPrincipalEmail(call))
                 return@get call.respond(HttpStatusCode.NotFound)
 
                 call.respond(
@@ -60,22 +44,10 @@ fun Route.userRoute(userService: UserService) {
     }
 
 }
-
-fun extractPrincipalUsername(call: ApplicationCall): String? =
-    call.principal<JWTPrincipal>()
-        ?.payload
-        ?.getClaim("username")
-        ?.asString()
-
-private fun UserRequest.toModel(): User =
-    User(
-        id = UUID.randomUUID(),
-        username = this.username,
-        password = this.password
-    )
-
 private fun User.toResponse(): UserResponse =
     UserResponse(
         id = this.id,
-        username = this.username
+        email = this.email,
+        fullName = this.fullName,
+        createdAt = this.createdAt
     )
