@@ -4,7 +4,6 @@ import com.auth0.jwt.JWT
 import com.auth0.jwt.JWTVerifier
 import com.auth0.jwt.algorithms.Algorithm
 import com.tockestoque.repository.UserRepository
-import com.tockestoque.routing.request.LoginRequest
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
 import io.ktor.server.auth.jwt.*
@@ -43,9 +42,11 @@ class JwtService(
             .withExpiresAt(Date(System.currentTimeMillis() + expireIn))
             .sign(Algorithm.HMAC256(secret))
 
-    fun customValidator(credential: JWTCredential): JWTPrincipal? {
-        val username = extractUsername(credential)
-        val foundUser = username?.let(userRepository::findByEmail)
+    suspend fun customValidator(credential: JWTCredential): JWTPrincipal? {
+        val email = extractEmail(credential)
+        val foundUser = email?.let { userEmail ->
+            userRepository.findByEmail(userEmail)
+        }
 
         return foundUser?.let {
             if (audienceMatches(credential)) {
@@ -60,7 +61,7 @@ class JwtService(
     private fun audienceMatches(credential: JWTCredential): Boolean =
         credential.payload.audience.contains(audience)
 
-    private fun extractUsername(credential: JWTCredential): String? =
+    private fun extractEmail(credential: JWTCredential): String? =
         credential.payload.getClaim("email").asString()
 
     private fun getConfigProperty(path: String) =

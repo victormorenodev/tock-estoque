@@ -3,9 +3,8 @@ package com.tockestoque.routing.request
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class UserRequest(
+data class SignUpRequest(
     val email: String,
     val password: String,
-    val fullName: String,
-    val createdAt: String,
+    val fullName: String
 )
