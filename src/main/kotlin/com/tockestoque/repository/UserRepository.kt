@@ -17,8 +17,10 @@ class UserRepository {
         }
 
 
-    fun findById(id: Int): User? =
-        TODO("To do")
+    suspend fun findById(id: Int): User? =
+        dbQuery {
+            UserTable.selectAll().where { UserTable.id eq id }.map(::resultToRow).singleOrNull()
+        }
 
     suspend fun findByEmail(email: String): User? {
         val user = dbQuery {
