@@ -30,12 +30,16 @@ class UserRepository {
         return user
     }
 
-    suspend fun createUser(user: SignUpRequest): User? {
+    suspend fun createUser(
+        userEmail: String,
+        userPassword: String,
+        userFullName: String
+    ): User? {
             val user = dbQuery {
                 UserTable.insert {
-                    it[email] = user.email
-                    it[fullName] = user.fullName
-                    it[password] = user.password
+                    it[email] = userEmail
+                    it[fullName] = userFullName
+                    it[password] = userPassword
                 }
             }.resultedValues?.first()
         return resultToRow(user)

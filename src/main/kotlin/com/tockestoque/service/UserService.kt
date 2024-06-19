@@ -1,6 +1,7 @@
 package com.tockestoque.service
 
 import com.auth0.jwt.interfaces.DecodedJWT
+import com.tockestoque.db.schemas.UserTable.password
 import com.tockestoque.model.User
 import com.tockestoque.repository.RefreshTokenRepository
 import com.tockestoque.repository.UserRepository
@@ -11,7 +12,8 @@ import com.tockestoque.routing.response.AuthResponse
 class UserService(
     private val userRepository: UserRepository,
     private val jwtService: JwtService,
-    private val refreshTokenRepository: RefreshTokenRepository
+    private val refreshTokenRepository: RefreshTokenRepository,
+    private val securityService: SecurityService
 ) {
 
     suspend fun findAll(): List<User?> =
@@ -24,15 +26,20 @@ class UserService(
         userRepository.findByEmail(email)
 
     suspend fun register(params: SignUpRequest): User? {
-        val user = userRepository.createUser(params)
+        val userSalt = securityService.generateSalt()
+        val userHashedPassword = securityService.hashPassword(params.password, userSalt)
+        val user = userRepository.createUser(
+            params.email,
+            userHashedPassword,
+            params.fullName
+        )
         return user
     }
 
     suspend fun authenticate(signInRequest: SignInRequest): AuthResponse? {
         val email = signInRequest.email
         val foundUser = userRepository.findByEmail(email)
-
-        return if (foundUser != null && foundUser.password == signInRequest.password) {
+        return if (foundUser != null && securityService.isCorrectPassword(signInRequest.password, foundUser.password)) {
             val accessToken = jwtService.createAccessToken(email)
             val refreshToken = jwtService.createRefreshToken(email)
 

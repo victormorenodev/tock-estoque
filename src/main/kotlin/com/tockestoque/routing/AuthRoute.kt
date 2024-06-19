@@ -14,22 +14,6 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 
 fun Route.authRoute(userService: UserService) {
-    // Sign in route
-    post ("/sign-in") {
-        val signInRequest = call.receive<SignInRequest>()
-        val authResponse: AuthResponse? = userService.authenticate(signInRequest)
-        authResponse?.let {
-            call.respond(authResponse)
-        }?: call.respond(HttpStatusCode.Unauthorized)
-    }
-
-    post("/sign-up") {
-        val signUpRequest = call.receive<SignUpRequest>()
-        val result = userService.register(signUpRequest)
-        if(result == null) call.respond(HttpStatusCode.BadRequest)
-        else call.respond(HttpStatusCode.OK)
-    }
-
     // Refresh token route
     post("/refresh") {
         val request = call.receive<RefreshTokenRequest>()

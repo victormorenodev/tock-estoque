@@ -48,17 +48,12 @@ fun Route.userRoute(userService: UserService, jwtService: JwtService) {
 
     post("/signin") {
         val params = call.receive<SignInRequest>()
-        val user = userService.findByEmail(params.email)
-        if(user == null) {
+        if(userService.findByEmail(params.email) == null) {
             call.respond(HttpStatusCode.NotFound, message = "User not found")
         } else {
-            if(user.password == params.password) {
-                val accessToken = jwtService.createAccessToken(user.email)
-                val refreshToken = jwtService.createRefreshToken(user.email)
-                return@post call.respond(HttpStatusCode.OK, AuthResponse(accessToken = accessToken, refreshToken = refreshToken))
-            } else {
-                return@post call.respond(HttpStatusCode.Unauthorized, message = "Wrong password")
-            }
+            val authResponse = userService.authenticate(params)
+                ?: return@post call.respond(HttpStatusCode.Unauthorized, message = "Wrong password")
+            return@post call.respond(HttpStatusCode.OK, authResponse)
         }
     }
 }
